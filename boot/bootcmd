@@ -1,0 +1,4 @@
+setenv bootargs 'console=ttyS2,115200n8 omapfb.mode=dvi:1360x768MR-16@60 root=/dev/mmcblk0p2 rootfstype=ext3 rootwait'
+mmc init
+fatload mmc 0 0x80300000 uImage
+bootm 0x80300000

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+ROOT=`pwd`
+UBOOT_PATH=uboot
+KERNEL_PATH=kernel/common
+
+##########################################################################
+# Preparation
+##########################################################################
+# Copy images to out directory
+if [ ! -d $ROOT/out ]; then
+	mkdir $ROOT/out
+fi 
+
+##########################################################################
+# Uboot build
+##########################################################################
+cd $ROOT/$UBOOT_PATH
+if [ ! -f include/config.h ]; then
+	echo "Configuring omap3_beagle_config"
+	make CROSS_COMPILE=arm-none-linux-gnueabi- omap3_beagle_config
+fi
+make CROSS_COMPILE=arm-none-linux-gnueabi- 
+if [ -f $ROOT/$UBOOT_PATH/u-boot ]; then
+	cp $ROOT/$UBOOT_PATH/u-boot $ROOT/out/
+fi
+
+##########################################################################
+# Kernel build
+##########################################################################
+cd $ROOT/$KERNEL_PATH
+if [ ! -f ./.config ]; then
+	echo "Configuring omap3_beagle_defconfig"
+	make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm omap3_beagle_defconfig 
+fi
+make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm uImage
+if [ -f $ROOT/$KERNEL_PATH/arch/arm/boot/uImage ]; then
+	cp $ROOT/$KERNEL_PATH/arch/arm/boot/uImage $ROOT/out/
+fi
+
