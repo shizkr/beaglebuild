@@ -5,14 +5,6 @@ UBOOT_PATH=uboot
 KERNEL_PATH=kernel/common
 
 ##########################################################################
-# Preparation
-##########################################################################
-# Copy images to out directory
-if [ ! -d $ROOT/out ]; then
-	mkdir $ROOT/out
-fi 
-
-##########################################################################
 # Uboot build
 ##########################################################################
 cd $ROOT/$UBOOT_PATH
@@ -22,7 +14,8 @@ if [ ! -f include/config.h ]; then
 fi
 make CROSS_COMPILE=arm-none-linux-gnueabi- 
 if [ -f $ROOT/$UBOOT_PATH/u-boot ]; then
-	cp $ROOT/$UBOOT_PATH/u-boot $ROOT/out/
+	mkdir -p $ROOT/out/boot
+	cp $ROOT/$UBOOT_PATH/u-boot $ROOT/out/boot/
 fi
 
 ##########################################################################
@@ -35,6 +28,19 @@ if [ ! -f ./.config ]; then
 fi
 make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm uImage
 if [ -f $ROOT/$KERNEL_PATH/arch/arm/boot/uImage ]; then
+	mkdir -p $ROOT/out/boot
 	cp $ROOT/$KERNEL_PATH/arch/arm/boot/uImage $ROOT/out/
 fi
 
+##########################################################################
+# Prebuilt images
+##########################################################################
+cd $ROOT/build/boot
+make -f Makefile    # build bootcmd
+cp -f $ROOT/build/boot/MLO $ROOT/out/boot/
+cp -f $ROOT/build/boot/boot.scr $ROOT/out/boot/
+cp -f $ROOT/build/boot/u-boot.bin $ROOT/out/boot/
+
+##########################################################################
+# User/Applications
+##########################################################################
