@@ -1,35 +1,78 @@
-#!/bin/bash
+#!/bin/sh
 
-ROOT=`pwd`
-UBOOT_PATH=uboot
-KERNEL_PATH=kernel/common
+export ROOT=`pwd`
+export UBOOT_PATH=uboot
+export KERNEL_PATH=kernel/common
+
+build_xloader=0
+build_uboot=0
+build_kernel=1
+build_modules=1
+build_apps=1
+
+while getopts d:hmu option
+do
+	case $option in
+	u)
+	build_xloader=0
+	build_uboot=1
+	build_kernel=0
+	build_modules=0
+	build_apps=0
+	;;
+	h)
+	echo "Usage :"
+	;;
+	m)
+	build_xloader=0
+	build_uboot=0
+	build_kernel=0
+	build_modules=1
+	build_apps=0
+	;;
+	d)
+	directory=$OPTARG
+	;;
+	esac
+done
 
 ##########################################################################
 # Uboot build
 ##########################################################################
-cd $ROOT/$UBOOT_PATH
-if [ ! -f include/config.h ]; then
-	echo "Configuring omap3_beagle_config"
-	make CROSS_COMPILE=arm-none-linux-gnueabi- omap3_beagle_config
-fi
-make CROSS_COMPILE=arm-none-linux-gnueabi- 
-if [ -f $ROOT/$UBOOT_PATH/u-boot ]; then
-	mkdir -p $ROOT/out/boot
-	cp $ROOT/$UBOOT_PATH/u-boot $ROOT/out/boot/
+if [ $build_uboot == 1 ]; then
+	cd $ROOT/$UBOOT_PATH
+	if [ ! -f include/config.h ]; then
+		echo "Configuring omap3_beagle_config"
+		make CROSS_COMPILE=arm-none-linux-gnueabi- omap3_beagle_config
+	fi
+	make CROSS_COMPILE=arm-none-linux-gnueabi-
+	if [ -f $ROOT/$UBOOT_PATH/u-boot ]; then
+		mkdir -p $ROOT/out/boot
+		cp $ROOT/$UBOOT_PATH/u-boot $ROOT/out/boot/
+	fi
 fi
 
 ##########################################################################
 # Kernel build
 ##########################################################################
-cd $ROOT/$KERNEL_PATH
-if [ ! -f ./.config ]; then
-	echo "Configuring omap3_beagle_defconfig"
-	make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm omap3_beagle_defconfig 
+if [ $build_kernel == 1 ]; then
+	cd $ROOT/$KERNEL_PATH
+	if [ ! -f ./.config ]; then
+		echo "Configuring omap3_beagle_defconfig"
+		make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm omap3_beagle_defconfig 
+	fi
+	make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm uImage
+	if [ -f $ROOT/$KERNEL_PATH/arch/arm/boot/uImage ]; then
+		mkdir -p $ROOT/out/boot
+		cp $ROOT/$KERNEL_PATH/arch/arm/boot/uImage $ROOT/out/
+	fi
 fi
-make CROSS_COMPILE=arm-none-linux-gnueabi- ARCH=arm uImage
-if [ -f $ROOT/$KERNEL_PATH/arch/arm/boot/uImage ]; then
-	mkdir -p $ROOT/out/boot
-	cp $ROOT/$KERNEL_PATH/arch/arm/boot/uImage $ROOT/out/
+##########################################################################
+# User/Applications
+##########################################################################
+if [ $build_modules == 1 ]; then
+	echo "Module build..."
+	cd $ROOT/kernel/modules && ./build
 fi
 
 ##########################################################################
@@ -40,7 +83,3 @@ make -f Makefile    # build bootcmd
 cp -f $ROOT/build/boot/MLO $ROOT/out/boot/
 cp -f $ROOT/build/boot/boot.scr $ROOT/out/boot/
 cp -f $ROOT/build/boot/u-boot.bin $ROOT/out/boot/
-
-##########################################################################
-# User/Applications
-##########################################################################
