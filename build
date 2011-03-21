@@ -84,3 +84,4 @@ cp -f $ROOT/build/boot/MLO $ROOT/out/boot/
 cp -f $ROOT/build/boot/boot.scr $ROOT/out/boot/
 cp -f $ROOT/build/boot/u-boot.bin $ROOT/out/boot/
 
+#Test for github
